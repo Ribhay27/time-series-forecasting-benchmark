@@ -81,6 +81,17 @@ Experimental results will only be reported after the models and evaluation pipel
 
 Additional engineering tools will be introduced only where they meaningfully support reproducibility, experimentation, or deployment.
 
+
+## Source:
+Open Power System Data — Time Series
+Version: 2020-10-06
+Primary source: ENTSO-E Transparency Platform
+
+The raw dataset is not stored in this repository.
+
+Run the data ingestion script to download and extract
+Germany's hourly electricity demand series.
+
 ## Research Principles
 
 This project follows several rules:
