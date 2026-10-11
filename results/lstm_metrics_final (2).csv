@@ -1,0 +1,2 @@
+model,lookback,horizon,hidden_size,num_layers,batch_size,learning_rate,final_epochs,trainable_parameters,training_seconds,MAE_MW,RMSE_MW,WAPE_percent
+LSTM,168,24,64,2,64,0.001,13,51992,576.3731168200002,1789.3870312252207,2835.7678175918936,3.372489510318335
