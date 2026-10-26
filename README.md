@@ -1,4 +1,4 @@
-# ForecastBench
+
 ## When Do Transformers Actually Win at Time-Series Forecasting?
 
 ForecastBench investigates whether Transformer-based forecasting provides enough predictive improvement to justify its complexity over simpler approaches, using Germany's hourly electricity demand.
