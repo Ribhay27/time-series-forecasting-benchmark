@@ -7,6 +7,12 @@ The research motivation comes from **Are Transformers Effective for Time Series 
 
 > **Research question: When is Transformer complexity actually worth it for time-series forecasting?**
 
+## Project presentation
+
+[Electricity Demand Forecasting — Project Overview (PDF)](docs/Electricity_Demand_Forecasting_Overview.pdf)
+
+Seven-slide presentation prepared for LinkedIn, covering the modeling approach and reported findings. The slides include a PatchTST WAPE of 2.57% and broader ranking/tradeoff claims whose supporting run artifacts are not yet checked in. Treat the presentation as the author's reported summary; the recorded-results and evaluation-limits sections below describe what the repository currently substantiates.
+
 ## Current status
 
 Model code and partial result artifacts are checked in. The full benchmark is not yet reproducible end to end.
