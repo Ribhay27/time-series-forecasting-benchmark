@@ -13,19 +13,7 @@ The research motivation comes from **Are Transformers Effective for Time Series 
 
 Seven-slide presentation prepared for LinkedIn, covering the modeling approach and reported findings. The slides include a PatchTST WAPE of 2.57% and broader ranking/tradeoff claims whose supporting run artifacts are not yet checked in. Treat the presentation as the author's reported summary; the recorded-results and evaluation-limits sections below describe what the repository currently substantiates.
 
-## Current status
 
-Model code and partial result artifacts are checked in. The full benchmark is not yet reproducible end to end.
-
-| Component | Verified repository status |
-| --- | --- |
-| Data preparation | Germany-load cleaning and integrity checks in `src/data/clean_data.py`; source CSV must be downloaded separately |
-| Exploration | `notebooks/01_data_exploration.ipynb` contains data-quality, seasonality, distribution, rolling-average and autocorrelation analysis; cells have no saved execution outputs |
-| Seasonal Naive | Weekly-lag baseline and validation/test evaluation code |
-| XGBoost | Multi-output forecasting and a separate validation tuning script |
-| DLinear | Model definition and a row in the comparison CSV; training script is incomplete and cannot run as checked in |
-| LSTM | Model and final-refit training script; separate checked-in metrics CSV |
-| PatchTST-style | Model, training and validation tuning scripts; no checked-in metrics CSV |
 
 ### Recorded results
 
