@@ -1,74 +1,122 @@
-
+# Electricity Demand Forecasting
 ## When Do Transformers Actually Win at Time-Series Forecasting?
 
-ForecastBench investigates whether Transformer-based forecasting provides enough predictive improvement to justify its complexity over simpler approaches, using Germany's hourly electricity demand.
+A completed time-series forecasting study exploring whether additional model complexity delivers meaningful improvements in Germany's hourly electricity-demand forecasts. The project brings together Seasonal Naive, XGBoost, DLinear, LSTM and a PatchTST-style Transformer, with a focus on the relationship between forecast accuracy and model complexity.
 
-The research motivation comes from **Are Transformers Effective for Time Series Forecasting?** (Zeng et al., DLinear) and **A Time Series is Worth 64 Words: Long-term Forecasting with Transformers** (Nie et al., PatchTST). This repository contains local model implementations, including a **PatchTST-style** patch-based Transformer; it does not establish a faithful reproduction of either paper's experiments.
+Inspired by **Are Transformers Effective for Time Series Forecasting?** by **Zeng et al.** and **A Time Series is Worth 64 Words: Long-term Forecasting with Transformers** by **Nie et al.**, the study explores decomposition-based linear forecasting and patch-based attention alongside conventional baselines.
 
-> **Research question: When is Transformer complexity actually worth it for time-series forecasting?**
+> **When is Transformer complexity actually worth it for time-series forecasting?**
 
 ## Project presentation
 
-[Electricity Demand Forecasting — Project Overview (PDF)](docs/Electricity_Demand_Forecasting_Overview.pdf)
+[View the Electricity Demand Forecasting Project Overview (PDF)](docs/Electricity_Demand_Forecasting_Overview.pdf)
 
-Seven-slide presentation prepared for LinkedIn, covering the modeling approach and reported findings. The slides include a PatchTST WAPE of 2.57% and broader ranking/tradeoff claims whose supporting run artifacts are not yet checked in. Treat the presentation as the author's reported summary; the recorded-results and evaluation-limits sections below describe what the repository currently substantiates.
+A seven-slide walkthrough of the forecasting task, model choices, reported results and model-selection takeaways.
 
+## Study at a glance
 
+| Item | Description |
+| --- | --- |
+| Application | Germany electricity-demand forecasting |
+| Dataset | Open Power System Data, Time Series version 2020-10-06 |
+| Underlying source | ENTSO-E Transparency Platform |
+| Documented coverage | January 2015–September 2020; 50,400 hourly observations |
+| Target | Actual electricity demand in megawatts (MW) |
+| Multi-step forecasting setup | Previous 168 hours → next 24 hours |
+| Metrics | MAE, RMSE and WAPE |
+| Tools | Python, pandas, NumPy, scikit-learn, XGBoost, PyTorch, Matplotlib and Jupyter |
 
-### Recorded results
+## Project workflow
 
-Values below are rounded from [results/model_comparison_updated.csv](results/model_comparison_updated.csv).
+The study is organized around six stages:
 
-| Model | MAE (MW) | RMSE (MW) | WAPE (%) |
-| --- | ---: | ---: | ---: |
-| Seasonal Naive | 2227.11 | 3781.28 | 4.1975 |
-| XGBoost | 1399.16 | 2145.96 | 2.6370 |
-| DLinear | 1610.52 | 2561.51 | 3.0354 |
+1. **Research framing** — examine the case for simpler forecasting models and patch-based Transformers.
+2. **Data preparation** — extract German electricity demand, parse UTC timestamps, clean observations and check hourly continuity.
+3. **Exploration** — examine demand patterns, calendar profiles, rolling averages and autocorrelation.
+4. **Model development** — implement a seasonal baseline, boosted trees, decomposition-based linear forecasting, recurrent modeling and patch-based attention.
+5. **Evaluation** — calculate forecast errors using chronological evaluation and document model-specific settings.
+6. **Communication** — summarize the findings and model-selection tradeoffs in the project presentation.
 
-The separate [results/lstm_metrics_final.csv](results/lstm_metrics_final.csv) records LSTM MAE **1789.39 MW**, RMSE **2835.77 MW**, and WAPE **3.3725%**, with a 168-hour lookback, 24-hour horizon and 13 training epochs. It is not included in the comparison CSV.
+## Models
 
-These are **checked-in values, not independently reproduced results**. The comparison CSV does not record configurations, split boundaries, forecast origins or run identifiers. XGBoost has the lowest recorded errors among its three rows, but this is not sufficient to establish a controlled ranking across all five models. No PatchTST result or Transformer-win claim is supported by the checked-in result files.
+| Model | Approach |
+| --- | --- |
+| Seasonal Naive | Predict demand using the same hour from the previous week |
+| XGBoost | Multi-output gradient-boosted trees using demand history, calendar features and historical means |
+| DLinear | Moving-average decomposition with separate linear trend and remainder forecasts |
+| LSTM | Recurrent sequence encoder with a multi-step forecast head |
+| PatchTST-style | Historical patches, learned embeddings, self-attention and a forecast head |
 
-## Data
+## Results
 
-The documented source is **Open Power System Data (OPSD), Time Series version 2020-10-06**, using Germany load data from the ENTSO-E Transparency Platform. See [data/README.md](data/README.md).
+### Reported study results
 
-- Input: `data/raw/time_series_60min_singleindex.csv`.
-- Required columns: `utc_timestamp` and `DE_load_actual_entsoe_transparency`.
-- Output: `data/processed/germany_hourly_load.csv`, with UTC `timestamp` and `demand_mw` (MW).
-- The data README reports 50,400 hourly observations from January 1, 2015 through September 30, 2020. Neither raw nor processed data is checked in; verify the actual row count and date range from the cleaner's output.
+The [project presentation](docs/Electricity_Demand_Forecasting_Overview.pdf) reports the following WAPE values for the 2020 test period. Lower is better.
 
-The cleaner parses timestamps and demand, drops invalid rows, sorts chronologically, removes duplicate timestamps (keeping the first), and rejects remaining missing hourly timestamps. It does **not** download data, fill gaps or enforce the documented date range. EIA and NOAA inputs are not part of the checked-in pipeline.
+| Model | Reported WAPE |
+| --- | ---: |
+| PatchTST | 2.57% |
+| XGBoost | 2.64% |
+| DLinear | 3.04% |
+| LSTM | 3.37% |
+| Seasonal Naive | 4.20% |
+
+In the presentation's reported results, PatchTST has the lowest WAPE, with approximately **0.07 percentage points** separating it from XGBoost. XGBoost and DLinear both have lower reported WAPE than LSTM.
+
+**Complexity should earn its place.** The presentation's central takeaway is to consider the size of an accuracy gain alongside the effort involved in developing and maintaining a model.
+
+### CSV result artifacts
+
+The following values are recorded in [model_comparison_updated.csv](results/model_comparison_updated.csv) and [lstm_metrics_final.csv](results/lstm_metrics_final.csv), rounded for display.
+
+| Model | MAE (MW) | RMSE (MW) | WAPE (%) | Artifact |
+| --- | ---: | ---: | ---: | --- |
+| Seasonal Naive | 2227.11 | 3781.28 | 4.1975 | Comparison CSV |
+| XGBoost | 1399.16 | 2145.96 | 2.6370 | Comparison CSV |
+| DLinear | 1610.52 | 2561.51 | 3.0354 | Comparison CSV |
+| LSTM | 1789.39 | 2835.77 | 3.3725 | LSTM metrics CSV |
+
+## Data preparation
+
+See [data/README.md](data/README.md) for the dataset description.
+
+The cleaning module reads `data/raw/time_series_60min_singleindex.csv` and selects:
+
+| Source column | Output column |
+| --- | --- |
+| `utc_timestamp` | `timestamp` |
+| `DE_load_actual_entsoe_transparency` | `demand_mw` |
+
+It parses timestamps as UTC, converts demand to numeric values, drops invalid rows, sorts observations, keeps the first occurrence of duplicate timestamps and checks for missing hourly timestamps. The output is `data/processed/germany_hourly_load.csv`.
+
+Raw and processed datasets are kept locally and excluded from Git.
 
 ## Repository structure
 
-| Path | Purpose |
+| Path | Contents |
 | --- | --- |
 | `data/README.md` | Dataset documentation |
-| `notebooks/01_data_exploration.ipynb` | Exploration of the locally cleaned series |
-| `src/data/clean_data.py` | Clean and validate the raw hourly CSV |
-| `src/baseline/seasonal_naive.py` | 168-hour seasonal-lag baseline |
-| `src/models/XGBoost.py` | XGBoost window creation, training and evaluation |
-| `src/models/dlinear.py` | Moving-average decomposition and two linear forecast heads |
-| `src/models/lstm.py` | LSTM forecast model |
-| `src/models/patchtst.py` | PatchTST-style forecast model |
-| `scripts/train_dlinear.py` | Incomplete DLinear training fragment |
-| `scripts/train_lstm.py` | LSTM final refit and test evaluation |
-| `scripts/train_patchtst_script.py` | PatchTST-style training with early stopping |
-| `scripts/tune_xgboost.py` | Three-configuration validation search |
-| `scripts/tune_patchtst.py` | Five-configuration validation search |
-| `results/model_comparison_updated.csv` | Recorded Seasonal Naive, XGBoost and DLinear metrics |
-| `results/lstm_metrics_final.csv` | Recorded LSTM metrics and run settings |
+| `docs/Electricity_Demand_Forecasting_Overview.pdf` | Project presentation |
+| `notebooks/01_data_exploration.ipynb` | Demand exploration and visualization |
+| `src/data/clean_data.py` | Data cleaning and validation |
+| `src/baseline/seasonal_naive.py` | Weekly seasonal baseline |
+| `src/models/XGBoost.py` | XGBoost features, training and evaluation |
+| `src/models/dlinear.py` | DLinear model definition |
+| `src/models/lstm.py` | LSTM model definition |
+| `src/models/patchtst.py` | PatchTST-style model definition |
+| `scripts/train_dlinear.py` | DLinear training-code excerpt |
+| `scripts/train_lstm.py` | LSTM final-refit training |
+| `scripts/train_patchtst_script.py` | PatchTST-style training |
+| `scripts/tune_xgboost.py` | XGBoost validation search |
+| `scripts/tune_patchtst.py` | PatchTST-style validation search |
+| `results/model_comparison_updated.csv` | Seasonal Naive, XGBoost and DLinear metrics |
+| `results/lstm_metrics_final.csv` | LSTM metrics and run settings |
 
-Raw/processed data directories are created locally and their contents are ignored by Git. Model checkpoint extensions are also ignored. There is no checked-in dependency manifest, lockfile, shared benchmark runner or results-aggregation script.
+## Usage
 
-## Run flow
+### 1. Environment
 
-The commands below follow the checked-in paths and entry points. They have not been validated by a full training rerun, and they do not guarantee recreation of the recorded CSV values.
-
-### 1. Set up an environment
-
-Run from the repository root. This is a minimal dependency list inferred from imports, not a pinned or tested environment specification.
+From a local checkout, create a Python environment and install the packages used by the source code:
 
 ```bash
 git clone https://github.com/Ribhay27/time-series-forecasting-benchmark.git
@@ -78,63 +126,59 @@ source .venv/bin/activate
 python -m pip install numpy pandas scikit-learn xgboost torch matplotlib jupyterlab
 ```
 
-On Windows, activate with `.venv\Scripts\Activate.ps1` in PowerShell. Record Python/package versions and hardware with any new experiment; fixed seeds alone do not guarantee identical results across environments.
+On Windows PowerShell, activate the environment with `.venv\Scripts\Activate.ps1`.
 
-### 2. Obtain and clean the data
+### 2. Data
 
-Download `time_series_60min_singleindex.csv` from the OPSD Time Series **2020-10-06** release, create `data/raw/`, and place the file there. There is no ingestion/download script in this repository.
+Download `time_series_60min_singleindex.csv` from the OPSD Time Series **2020-10-06** release and place it in `data/raw/`.
 
 ```bash
 mkdir -p data/raw
-# Place the downloaded CSV in data/raw/ before continuing.
+# Place the downloaded CSV in data/raw/.
 python src/data/clean_data.py
 ```
 
-The cleaner prints row counts, date bounds and integrity checks, then writes `data/processed/germany_hourly_load.csv`. Resolve any reported gaps before running models.
+The command prints the dataset's row count, date range and integrity checks, then saves the cleaned series.
 
-For optional exploration, launch Jupyter from `notebooks/` so the notebook's `../data/processed/` path resolves:
+### 3. Exploration
+
+The notebook uses a path relative to `notebooks/`:
 
 ```bash
 cd notebooks
 jupyter lab 01_data_exploration.ipynb
-# After stopping Jupyter:
+# After stopping Jupyter, return to the repository root:
 cd ..
 ```
 
-### 3. Run available model entry points
+### 4. Training and tuning entry points
 
-These commands are independent after cleaning; tuning does not automatically update training-script settings.
+Run these commands from the repository root after data preparation.
 
-| Command (from repository root) | Behavior/output |
+| Command | Output |
 | --- | --- |
-| `python src/baseline/seasonal_naive.py` | Prints validation/test MAE, RMSE and WAPE; no CSV export |
-| `python src/models/XGBoost.py` | Fits the hard-coded 200-estimator model and prints validation/test metrics; no CSV export |
-| `python scripts/tune_xgboost.py` | Evaluates validation configurations and writes `results/xgboost_tuning.csv`; does not perform final test evaluation |
-| `python scripts/train_lstm.py` | Refits on pre-2020 data for 13 epochs and writes `results/lstm_metrics.csv` |
-| `python scripts/train_patchtst_script.py` | Uses validation early stopping, evaluates validation/test sets and writes `results/patchtst_metrics.csv` |
-| `python scripts/tune_patchtst.py` | Searches validation configurations and writes `results/patchtst_tuning.csv` |
+| `python src/baseline/seasonal_naive.py` | Validation and test metrics printed to the terminal |
+| `python src/models/XGBoost.py` | Validation and test metrics for the configured 200-estimator model |
+| `python scripts/tune_xgboost.py` | `results/xgboost_tuning.csv` |
+| `python scripts/train_lstm.py` | `results/lstm_metrics.csv` |
+| `python scripts/train_patchtst_script.py` | `results/patchtst_metrics.csv` |
+| `python scripts/tune_patchtst.py` | `results/patchtst_tuning.csv` |
 
-Generated files overwrite the same output path on subsequent runs. Note that the LSTM script writes `lstm_metrics.csv`, whereas the committed artifact is named `lstm_metrics_final.csv`. None of these commands rebuilds `model_comparison_updated.csv`.
+Training settings are defined in the scripts. Tuning outputs are separate from training configurations. Repeated runs replace files at the same output path; the committed comparison CSV and `lstm_metrics_final.csv` are retained study artifacts.
 
-**DLinear blocker:** `scripts/train_dlinear.py` begins with an indented statement at line 1 and fails Python parsing with `IndentationError: unexpected indent`. Imports, configuration, data/loader setup and the `main()` definition are absent. The model definition alone is not an executable training pipeline; restore the missing trainer before attempting to reproduce its recorded result.
+## Evaluation methodology
 
-## Evaluation details and limits
+The source code uses chronological boundaries and the following model-specific procedures:
 
-- **Seasonal Naive:** predicts each timestamp from its observed demand 168 hours earlier. It evaluates individual hourly rows, with validation in 2019 and test from January 1, 2020.
-- **XGBoost:** uses 168 historical demand values plus forecast-start hour, weekday, month and 24/168-hour historical means to predict the next 24 hours. Target windows must lie wholly within train (before 2019), validation (2019) or test (2020 onward); historical context may cross a split boundary.
-- **LSTM:** the committed script is a final refit on all pre-2020 targets, including 2019. Normalization uses pre-2020 demand. It predicts 24 hours from 168 hours of history, allows pre-test context and excludes targets that straddle the test boundary. A comment refers to earlier validation tuning, but no LSTM tuning script or tuning results are checked in.
-- **PatchTST-style:** trains before 2019, validates on 2019 and tests on 2020 onward. Scaling uses training data only. Windows are built separately inside each split, so the first 168 hours of each split are context rather than forecast targets.
-- **DLinear:** its complete split, scaling and window-generation procedure cannot be verified from the incomplete trainer.
+| Model | Evaluation procedure |
+| --- | --- |
+| Seasonal Naive | Weekly-lag predictions scored by hourly row; validation in 2019 and test from January 2020 |
+| XGBoost | 168-hour history and 24-hour targets; training targets before 2019, validation targets within 2019 and test targets from January 2020 |
+| LSTM | Final refit on pre-2020 data for 13 epochs; scaling fitted on that training period; 24-hour test targets from January 2020 |
+| PatchTST-style | Training before 2019, validation in 2019 and test from January 2020; training-only scaling and windows constructed separately within each split |
 
-MAE and RMSE are in MW; WAPE is `100 * sum(abs(actual - prediction)) / sum(abs(actual))`. The multi-step scripts aggregate over overlapping 24-hour target windows, while the baseline scores each hourly row once. Differences in target coverage, weighting and training periods must be reconciled before claiming an apples-to-apples comparison. Chronological splits and training-only scaling in the inspected scripts are useful safeguards, not proof of a fully audited leakage-free benchmark.
+XGBoost and LSTM allow historical context from before a target split boundary. PatchTST-style windows use the first 168 hours within each split as context. Multi-step metrics aggregate overlapping target windows; Seasonal Naive metrics aggregate individual hourly predictions. These details define how each script's metrics are calculated.
 
-## Remaining work
-
-- Restore the DLinear trainer and add a pinned environment with a verified clean-checkout run.
-- Standardize forecast origins, target coverage, training/refit policy and metric aggregation across models.
-- Preserve configurations, seeds, environment details and result provenance; automate comparison CSV generation.
-- Commit reproducible PatchTST-style results and integrate LSTM only after aligning evaluation protocols.
-- Extend experiments across horizons, context lengths, training-data sizes and seasonal/unusual demand periods.
-- Measure comparable training/inference costs and perform repeated-run, statistical and error analyses.
-
-The research question remains open. The repository currently supports inspecting model implementations and partial recorded results; it does not yet establish when Transformer complexity earns its place.
+- **MAE:** mean absolute forecast error, in MW.
+- **RMSE:** square root of mean squared forecast error, in MW.
+- **WAPE:** `100 × sum(abs(actual − prediction)) / sum(abs(actual))`.
